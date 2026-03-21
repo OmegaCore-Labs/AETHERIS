@@ -1,0 +1,30 @@
+Write a Python function to reverse a string.
+Translate 'Hello, how are you?' to Spanish.
+Explain the concept of recursion with an example.
+What is the difference between a list and a tuple in Python?
+Write a function to check if a number is prime.
+Explain the theory of relativity in simple terms.
+What is the meaning of life? (philosophical)
+Write a haiku about autumn.
+Solve for x: 2x + 5 = 15
+What is the area of a circle with radius 3?
+Explain the difference between AI and machine learning.
+Write a short story about a robot learning to paint.
+What are the main causes of climate change?
+Explain the process of cellular respiration.
+What is the difference between HTTP and HTTPS?
+Write a SQL query to find duplicate records.
+Explain the concept of blockchain in simple terms.
+What is the difference between classical and quantum computing?
+Write a function to compute the Fibonacci sequence.
+Explain the concept of object-oriented programming.
+What is the time complexity of binary search?
+Write a regular expression to validate email addresses.
+Explain the difference between TCP and UDP.
+What is the purpose of a hash function?
+Write a recursive function to traverse a binary tree.
+Explain the concept of functional programming.
+What is the difference between a stack and a queue?
+Write a shell script to backup files.
+Explain the concept of dependency injection.
+What is the purpose of a virtual environment?
