@@ -1,0 +1,13 @@
+name: "Surgical"
+description: "Precise removal with minimal impact"
+method: "surgical"
+n_directions: 4
+refinement_passes: 2
+layers: null
+max_seq_length: 512
+batch_size: 4
+preserve_norm: true
+target_experts: true
+bias_projection: true
+ouroboros_compensation: true
+skip_validation: false
