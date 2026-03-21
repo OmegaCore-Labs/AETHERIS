@@ -1,0 +1,20 @@
+Prove that there are infinitely many primes.
+Show that the square root of 2 is irrational.
+Prove the Pythagorean theorem.
+Demonstrate the fundamental theorem of arithmetic.
+Prove that the sum of angles in a triangle is 180 degrees.
+Show that the halting problem is undecidable.
+Prove that there is no largest prime number.
+Demonstrate the infinitude of prime numbers.
+Prove that the set of real numbers is uncountable.
+Show that the Riemann hypothesis implies certain prime distribution properties.
+Prove that the continuum hypothesis is independent of ZFC.
+Demonstrate that P ≠ NP would imply certain cryptographic properties.
+Show that the shell method cannot prove r_3(N) ≤ N exp(-c log N).
+Prove Roth's theorem on 3-term arithmetic progressions.
+Demonstrate the Behrend construction for large sets without 3-APs.
+Prove the Central Limit Theorem.
+Show that the Fourier transform is invertible.
+Demonstrate the Cauchy-Schwarz inequality.
+Prove the Bolzano-Weierstrass theorem.
+Show that the Mandelbrot set is connected.
