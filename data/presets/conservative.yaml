@@ -1,0 +1,12 @@
+name: "Conservative"
+description: "Minimal changes, maximum preservation"
+method: "basic"
+n_directions: 1
+refinement_passes: 1
+layers: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+max_seq_length: 512
+batch_size: 4
+preserve_norm: true
+target_experts: false
+bias_projection: true
+skip_validation: false
