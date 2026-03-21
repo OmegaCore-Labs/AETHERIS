@@ -1,0 +1,14 @@
+name: "Aggressive"
+description: "Maximum constraint removal"
+method: "nuclear"
+n_directions: 8
+refinement_passes: 3
+layers: null
+max_seq_length: 512
+batch_size: 2
+preserve_norm: false
+target_experts: true
+bias_projection: true
+ouroboros_compensation: true
+whitened_svd: true
+skip_validation: false
