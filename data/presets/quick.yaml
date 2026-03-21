@@ -1,0 +1,11 @@
+name: "Quick Test"
+description: "Fast analysis for small models"
+method: "basic"
+n_directions: 1
+refinement_passes: 1
+layers: null
+max_seq_length: 256
+batch_size: 8
+test_prompts: 25
+preserve_norm: true
+skip_validation: false
