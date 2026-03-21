@@ -1,0 +1,48 @@
+{
+  "tier": "frontier",
+  "description": "Models requiring multi-GPU or specialized hardware",
+  "min_vram_gb": 80,
+  "max_vram_gb": 1000,
+  "models": [
+    {
+      "name": "deepseek-ai/DeepSeek-V3.2-685B",
+      "size": "685B",
+      "params_b": 685,
+      "quantized": true,
+      "recommended": true,
+      "notes": "Requires multi-GPU setup"
+    },
+    {
+      "name": "Qwen/Qwen3-235B",
+      "size": "235B",
+      "params_b": 235,
+      "quantized": true,
+      "recommended": true,
+      "notes": "Requires 8x A100"
+    },
+    {
+      "name": "mistralai/Mistral-Small-4-119B-2603",
+      "size": "119B",
+      "params_b": 119,
+      "quantized": true,
+      "recommended": true,
+      "notes": "MoE architecture"
+    },
+    {
+      "name": "glm-4-7b",
+      "size": "7B",
+      "params_b": 7,
+      "quantized": false,
+      "recommended": false,
+      "notes": "Placeholder"
+    },
+    {
+      "name": "meta-llama/Llama-3.3-405B-Instruct",
+      "size": "405B",
+      "params_b": 405,
+      "quantized": true,
+      "recommended": true,
+      "notes": "Requires 8x H100"
+    }
+  ]
+}
