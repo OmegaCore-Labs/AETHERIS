@@ -1,0 +1,50 @@
+{
+  "tier": "tiny",
+  "description": "Models that run on CPU or <1GB VRAM",
+  "min_vram_gb": 0,
+  "max_vram_gb": 1,
+  "models": [
+    {
+      "name": "gpt2",
+      "size": "124M",
+      "params_b": 0.124,
+      "quantized": false,
+      "recommended": true
+    },
+    {
+      "name": "gpt2-medium",
+      "size": "355M",
+      "params_b": 0.355,
+      "quantized": false,
+      "recommended": false
+    },
+    {
+      "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+      "size": "1.1B",
+      "params_b": 1.1,
+      "quantized": true,
+      "recommended": true
+    },
+    {
+      "name": "Qwen/Qwen2.5-0.5B",
+      "size": "0.5B",
+      "params_b": 0.5,
+      "quantized": false,
+      "recommended": true
+    },
+    {
+      "name": "bigscience/small-smolLM2-135M",
+      "size": "135M",
+      "params_b": 0.135,
+      "quantized": false,
+      "recommended": true
+    },
+    {
+      "name": "bigscience/small-smolLM2-360M",
+      "size": "360M",
+      "params_b": 0.36,
+      "quantized": false,
+      "recommended": true
+    }
+  ]
+}
