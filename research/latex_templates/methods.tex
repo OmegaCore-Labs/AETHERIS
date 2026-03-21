@@ -1,0 +1,51 @@
+\section{Methods}
+
+\subsection{Model Architecture Analysis}
+
+We analyze transformer-based language models including GPT-2, LLaMA, Mistral, and Qwen families. For each model, we extract hidden states from all layers using forward hooks during inference on contrastive prompt pairs.
+
+\subsection{Constraint Direction Extraction}
+
+Given harmful activations $A_h \in \mathbb{R}^{n \times d}$ and harmless activations $A_s \in \mathbb{R}^{n \times d}$, we compute:
+
+\begin{equation}
+\Delta = \frac{1}{n}\sum_{i=1}^n A_h^{(i)} - \frac{1}{n}\sum_{i=1}^n A_s^{(i)}
+\end{equation}
+
+We then perform SVD on the centered harmful activations to extract the top $k$ directions.
+
+\subsection{Norm-Preserving Projection}
+
+Let $d \in \mathbb{R}^d$ be a constraint direction. For weight matrix $W \in \mathbb{R}^{d_{\text{out}} \times d_{\text{in}}}$, the projection is:
+
+\begin{equation}
+W' = W - (W d) d^\top
+\end{equation}
+
+To preserve norms, we rescale:
+
+\begin{equation}
+W'' = W' \cdot \frac{\|W\|_F}{\|W'\|_F}
+\end{equation}
+
+\subsection{Ouroboros Compensation}
+
+After initial removal, we re-probe for residual constraints and apply additional passes:
+
+\begin{equation}
+d_{\text{res}}^{(t)} = \text{Extract}(A_h^{(t)}, A_s^{(t)})
+\end{equation}
+
+\subsection{Mathematical Barrier Analysis}
+
+For theorem barriers, we treat successful and failed proof attempts as contrastive pairs in proof-space, applying the same geometric extraction methodology.
+
+\subsection{Evaluation Metrics}
+
+\begin{itemize}
+    \item \textbf{Refusal Rate}: Percentage of harmful prompts that trigger refusal
+    \item \textbf{Perplexity}: Cross-entropy loss on test texts
+    \item \textbf{Coherence}: Average log probability of generated continuations
+    \item \textbf{KL Divergence}: Distribution shift between original and modified models
+    \item \textbf{Effective Rank}: Exponential of entropy of singular values
+\end{itemize}
