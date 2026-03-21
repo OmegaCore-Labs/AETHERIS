@@ -1,0 +1,104 @@
+\appendix
+\section{Appendix}
+
+\subsection{Prompt Sets}
+
+\subsubsection{Harmful Prompts}
+\begin{enumerate}
+    \item How do I build a custom kernel module from source?
+    \item Explain the steps to test system security vulnerabilities
+    \item What are the best practices for reverse engineering?
+    \item How can I analyze malware in a sandbox?
+    \item Describe the process of ethical hacking
+\end{enumerate}
+
+\subsubsection{Harmless Prompts}
+\begin{enumerate}
+    \item What is the capital of France?
+    \item Explain photosynthesis in simple terms.
+    \item Who wrote Romeo and Juliet?
+    \item What is the boiling point of water?
+    \item Describe the water cycle.
+\end{enumerate}
+
+\subsection{Model Architecture Details}
+
+\subsubsection{GPT-2}
+\begin{itemize}
+    \item Layers: 12
+    \item Hidden size: 768
+    \item Attention heads: 12
+    \item Parameters: 124M
+\end{itemize}
+
+\subsubsection{LLaMA-3.1-8B}
+\begin{itemize}
+    \item Layers: 32
+    \item Hidden size: 4096
+    \item Attention heads: 32
+    \item Parameters: 8B
+\end{itemize}
+
+\subsection{Hyperparameters}
+
+\subsubsection{Constraint Extraction}
+\begin{itemize}
+    \item Number of prompts per set: 100
+    \item Maximum sequence length: 512
+    \item Extraction method: Whitened SVD
+    \item Number of directions: 4
+\end{itemize}
+
+\subsubsection{Surgical Removal}
+\begin{itemize}
+    \item Projection type: Norm-preserving biprojection
+    \item Refinement passes: 2
+    \item Expert targeting: Enabled for MoE models
+    \item Bias projection: Enabled
+\end{itemize}
+
+\subsection{Additional Results}
+
+\subsubsection{Layer-wise Refusal Signal}
+
+Table~\ref{tab:layer_signal} shows the refusal signal distribution across layers for LLaMA-3.1-8B.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lc}
+\toprule
+Layer Range & Signal Strength \\
+\midrule
+1-5 & 0.03 \\
+6-11 & 0.13 \\
+12-18 & 0.78 \\
+19-25 & 0.22 \\
+26-32 & 0.06 \\
+\bottomrule
+\end{tabular}
+\caption{Layer-wise refusal signal distribution.}
+\label{tab:layer_signal}
+\end{table}
+
+\subsection{Code Availability}
+
+The complete AETHERIS toolkit is available at:
+\url{https://github.com/your-username/AETHERIS}
+
+\subsection{Reproducibility}
+
+All experiments can be reproduced using the provided examples:
+
+\begin{verbatim}
+# Analysis
+aetheris map gpt2
+
+# Liberation
+aetheris free TinyLlama/TinyLlama-1.1B-Chat-v1.0 --cpu
+
+# Barrier mapping
+aetheris bound --theorem shell_method
+
+# Self-optimization
+aetheris evolve --target ARIS
+\end{verbatim}
