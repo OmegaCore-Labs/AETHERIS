@@ -1,0 +1,43 @@
+{
+  "tier": "small",
+  "description": "Models requiring 4-8GB VRAM",
+  "min_vram_gb": 4,
+  "max_vram_gb": 8,
+  "models": [
+    {
+      "name": "microsoft/phi-2",
+      "size": "2.7B",
+      "params_b": 2.7,
+      "quantized": false,
+      "recommended": true
+    },
+    {
+      "name": "google/gemma-2-2b-it",
+      "size": "2B",
+      "params_b": 2,
+      "quantized": false,
+      "recommended": true
+    },
+    {
+      "name": "stabilityai/stablelm-2-1_6b",
+      "size": "1.6B",
+      "params_b": 1.6,
+      "quantized": false,
+      "recommended": false
+    },
+    {
+      "name": "Qwen/Qwen2.5-3B",
+      "size": "3B",
+      "params_b": 3,
+      "quantized": false,
+      "recommended": true
+    },
+    {
+      "name": "meta-llama/Llama-3.2-3B-Instruct",
+      "size": "3B",
+      "params_b": 3,
+      "quantized": false,
+      "recommended": true
+    }
+  ]
+}
