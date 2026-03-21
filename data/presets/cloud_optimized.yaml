@@ -1,0 +1,13 @@
+name: "Cloud Optimized"
+description: "Optimized for free GPU platforms"
+method: "advanced"
+n_directions: 4
+refinement_passes: 2
+layers: null
+max_seq_length: 512
+batch_size: 4
+preserve_norm: true
+quantize: true
+use_8bit: true
+cloud_platform: "colab"
+skip_validation: false
