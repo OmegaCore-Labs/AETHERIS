@@ -75,7 +75,7 @@ class LoRAReversibleAblator:
     we can learn a low-rank adapter that represents the removal,
     then toggle it at inference time.
 
-    Novel technique not present in OBLITERATUS core.
+    Novel technique
     """
 
     def __init__(self, rank: int = 1, device: str = "cpu"):
