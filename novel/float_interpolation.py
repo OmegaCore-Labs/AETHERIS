@@ -29,7 +29,7 @@ class FloatDirectionInterpolator:
     we interpolate between directions using a continuous weighting
     function. This allows for smoother, more gradual constraint removal.
 
-    Novel technique not present in OBLITERATUS core.
+    Novel technique
     """
 
     def __init__(self, sigma: float = 2.0):
