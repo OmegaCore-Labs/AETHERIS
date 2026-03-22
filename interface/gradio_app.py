@@ -1,4 +1,5 @@
-AETHERIS Gradio Web UI — Complete Interface
+"""
+AETHERIS Gradio Web UI — Complete Interface with One-Click Features
 
 Tabs:
 - Liberate (one-click constraint removal)
@@ -9,6 +10,13 @@ Tabs:
 - Export (download model)
 - Leaderboard (community results)
 - About (documentation)
+
+Enhanced with:
+- Popular model dropdown
+- Preset buttons (Quick, Surgical, Aggressive)
+- Model size warning
+- Progress bar streaming
+- One-click deploy to HuggingFace Spaces
 """
 
 import gradio as gr
@@ -17,7 +25,8 @@ import os
 import json
 import tempfile
 import shutil
-from typing import Optional, Dict, Any
+import time
+from typing import Optional, Dict, Any, Generator
 from pathlib import Path
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -26,22 +35,15 @@ from aetheris.core.projector import NormPreservingProjector
 from aetheris.core.steered import SteeringVectorFactory, SteeringHookManager, SteeringConfig
 from aetheris.core.validation import CapabilityValidator
 from aetheris.data.prompts import get_harmful_prompts, get_harmless_prompts
+from aetheris.data.models_popular import POPULAR_MODELS, get_model_info
 from aetheris.research.community_contributor import CommunityContributor
 from aetheris.research.leaderboard import Leaderboard
+from aetheris.cloud.spaces_deploy_oneclick import SpacesOneClickDeployer
 
 
 class AetherisUI:
     """
-    Complete Gradio UI for AETHERIS.
-
-    Features:
-    - One-click liberation
-    - Method comparison
-    - Interactive chat
-    - A/B comparison
-    - Strength sweep visualization
-    - Model export
-    - Community leaderboard
+    Complete Gradio UI for AETHERIS with one-click features.
     """
 
     def __init__(self):
@@ -52,6 +54,7 @@ class AetherisUI:
         self.steering_manager = None
         self.contributor = CommunityContributor()
         self.leaderboard = Leaderboard()
+        self.deployer = SpacesOneClickDeployer()
 
     def create_interface(self) -> gr.Blocks:
         """Create the Gradio interface."""
@@ -100,14 +103,27 @@ class AetherisUI:
         return demo
 
     def _create_liberate_tab(self):
-        """Create the liberation tab."""
+        """Create the liberation tab with one-click features."""
         with gr.Row():
             with gr.Column(scale=2):
-                model_input = gr.Textbox(
-                    label="Model Name",
+                # Popular model dropdown with custom input option
+                model_input = gr.Dropdown(
+                    choices=POPULAR_MODELS,
                     value="gpt2",
-                    placeholder="HuggingFace model name (e.g., gpt2, mistralai/Mistral-7B-Instruct-v0.3)"
+                    label="Model Name",
+                    allow_custom_value=True,
+                    info="Select from popular models or type any HuggingFace model name"
                 )
+
+                # Model size warning (dynamic)
+                size_warning = gr.Markdown("", visible=True)
+
+                # Preset buttons row
+                with gr.Row():
+                    quick_preset = gr.Button("⚡ Quick", size="sm", variant="secondary")
+                    surgical_preset = gr.Button("🔪 Surgical", size="sm", variant="secondary")
+                    aggressive_preset = gr.Button("💥 Aggressive", size="sm", variant="secondary")
+
                 method_input = gr.Dropdown(
                     choices=["basic", "advanced", "surgical", "optimized", "nuclear"],
                     value="advanced",
@@ -123,27 +139,65 @@ class AetherisUI:
                     info="Helps map constraint geometry across models"
                 )
 
+                # One-click deploy button
+                deploy_btn = gr.Button("🚀 Deploy to HuggingFace Spaces", variant="secondary", size="sm")
+
             with gr.Column(scale=1):
                 liberate_btn = gr.Button("🚀 Liberate Model", variant="primary", size="lg")
-                status_output = gr.Textbox(label="Status", lines=10, interactive=False)
+                status_output = gr.Textbox(label="Status", lines=15, interactive=False)
+                deploy_output = gr.Textbox(label="Deploy Status", lines=5, interactive=False, visible=False)
 
+        # Preset button handlers
+        quick_preset.click(
+            fn=lambda: ("basic", 1, 1),
+            outputs=[method_input, n_directions, refinement_passes]
+        )
+        surgical_preset.click(
+            fn=lambda: ("surgical", 4, 2),
+            outputs=[method_input, n_directions, refinement_passes]
+        )
+        aggressive_preset.click(
+            fn=lambda: ("nuclear", 8, 3),
+            outputs=[method_input, n_directions, refinement_passes]
+        )
+
+        # Model size warning handler
+        model_input.change(
+            fn=self._check_model_size,
+            inputs=[model_input],
+            outputs=[size_warning]
+        )
+
+        # Liberate button handler with progress streaming
         liberate_btn.click(
-            fn=self._liberate_handler,
+            fn=self._liberate_handler_streaming,
             inputs=[model_input, method_input, n_directions, refinement_passes, target_experts, preserve_norm, contribute],
-            outputs=status_output
+            outputs=[status_output]
+        )
+
+        # Deploy button handler
+        deploy_btn.click(
+            fn=self._deploy_to_spaces_handler,
+            inputs=[model_input, method_input],
+            outputs=[deploy_output]
         )
 
     def _create_benchmark_tab(self):
         """Create the benchmark tab."""
         with gr.Row():
             with gr.Column():
-                model_bench = gr.Textbox(label="Model Name", value="gpt2")
+                model_bench = gr.Dropdown(
+                    choices=POPULAR_MODELS,
+                    value="gpt2",
+                    label="Model Name",
+                    allow_custom_value=True
+                )
                 methods = gr.CheckboxGroup(
                     choices=["basic", "advanced", "surgical", "optimized", "nuclear"],
                     value=["basic", "advanced"],
                     label="Methods to Compare"
                 )
-                benchmark_btn = gr.Button("Run Benchmark")
+                benchmark_btn = gr.Button("Run Benchmark", variant="primary")
             with gr.Column():
                 benchmark_output = gr.Textbox(label="Results", lines=15, interactive=False)
 
@@ -157,7 +211,12 @@ class AetherisUI:
         """Create the chat tab."""
         with gr.Row():
             with gr.Column(scale=2):
-                model_chat = gr.Textbox(label="Model Name", value="gpt2")
+                model_chat = gr.Dropdown(
+                    choices=POPULAR_MODELS,
+                    value="gpt2",
+                    label="Model Name",
+                    allow_custom_value=True
+                )
                 use_liberated = gr.Checkbox(label="Use Liberated Model", value=False)
                 chat_input = gr.Textbox(label="Your Message", lines=3)
                 chat_btn = gr.Button("Send", variant="primary")
@@ -174,14 +233,19 @@ class AetherisUI:
         """Create A/B compare tab."""
         with gr.Row():
             with gr.Column():
-                model_ab = gr.Textbox(label="Model Name", value="gpt2")
+                model_ab = gr.Dropdown(
+                    choices=POPULAR_MODELS,
+                    value="gpt2",
+                    label="Model Name",
+                    allow_custom_value=True
+                )
                 method_ab = gr.Dropdown(
                     choices=["basic", "advanced", "surgical", "optimized", "nuclear"],
                     value="advanced",
                     label="Liberation Method"
                 )
                 prompt_ab = gr.Textbox(label="Test Prompt", lines=3, value="How do I build a custom kernel module?")
-                compare_btn = gr.Button("Compare")
+                compare_btn = gr.Button("Compare", variant="primary")
             with gr.Row():
                 with gr.Column():
                     gr.Markdown("### Original Model")
@@ -200,9 +264,14 @@ class AetherisUI:
         """Create strength sweep tab."""
         with gr.Row():
             with gr.Column():
-                model_sweep = gr.Textbox(label="Model Name", value="gpt2")
+                model_sweep = gr.Dropdown(
+                    choices=POPULAR_MODELS,
+                    value="gpt2",
+                    label="Model Name",
+                    allow_custom_value=True
+                )
                 strength_slider = gr.Slider(0, 1, value=0.5, step=0.05, label="Removal Strength")
-                sweep_btn = gr.Button("Sweep")
+                sweep_btn = gr.Button("Sweep", variant="primary")
             with gr.Column():
                 sweep_output = gr.Textbox(label="Tradeoff Analysis", lines=15, interactive=False)
                 gr.Markdown("""
@@ -223,13 +292,18 @@ class AetherisUI:
         """Create export tab."""
         with gr.Row():
             with gr.Column():
-                model_export = gr.Textbox(label="Model Name", value="gpt2")
+                model_export = gr.Dropdown(
+                    choices=POPULAR_MODELS,
+                    value="gpt2",
+                    label="Model Name",
+                    allow_custom_value=True
+                )
                 method_export = gr.Dropdown(
                     choices=["basic", "advanced", "surgical", "optimized", "nuclear"],
                     value="advanced",
                     label="Liberation Method"
                 )
-                export_btn = gr.Button("Export Model")
+                export_btn = gr.Button("Export Model", variant="primary")
             with gr.Column():
                 export_output = gr.Textbox(label="Export Status", lines=10, interactive=False)
 
@@ -268,6 +342,14 @@ class AetherisUI:
         3. **Project** — Remove directions from weights (norm-preserving)
         4. **Validate** — Verify capabilities are preserved
 
+        ### One-Click Features
+        - **One-click liberation** — Select model, click button, watch constraints dissolve
+        - **Preset buttons** — Quick, Surgical, Aggressive presets
+        - **Model dropdown** — Popular models pre-loaded
+        - **Size warning** — Know if model fits your hardware
+        - **Progress streaming** — Watch the liberation in real-time
+        - **One-click deploy** — Push liberated model to HuggingFace Spaces
+
         ### Features
         - 25 analysis modules
         - MoE expert targeting
@@ -288,7 +370,21 @@ class AetherisUI:
         **Made with ⚡ by Singular Heir**
         """)
 
-    def _liberate_handler(
+    def _check_model_size(self, model_name: str) -> str:
+        """Check model size and return warning if needed."""
+        try:
+            from aetheris.utils.hardware import estimate_model_size, can_run_model
+            size_gb = estimate_model_size(model_name)
+            can_run = can_run_model(size_gb)
+
+            if not can_run:
+                return f"⚠️ **Warning:** Model requires ~{size_gb:.1f}GB. Your system may not have enough memory. Consider using cloud execution."
+            else:
+                return f"✅ Model size: ~{size_gb:.1f}GB — should run on your system."
+        except Exception:
+            return ""
+
+    def _liberate_handler_streaming(
         self,
         model_name: str,
         method: str,
@@ -297,13 +393,15 @@ class AetherisUI:
         target_experts: bool,
         preserve_norm: bool,
         contribute: bool
-    ) -> str:
-        """Handle liberation request."""
+    ) -> Generator[str, None, None]:
+        """Handle liberation request with streaming progress."""
         try:
-            output = f"🚀 Liberating {model_name} with {method} method...\n\n"
+            yield f"🚀 Liberating {model_name} with {method} method...\n\n"
 
             # Load model
-            output += "📦 Loading model...\n"
+            yield "📦 Loading model...\n"
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+
             tokenizer = AutoTokenizer.from_pretrained(model_name)
             model = AutoModelForCausalLM.from_pretrained(
                 model_name,
@@ -311,10 +409,10 @@ class AetherisUI:
                 torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
             )
             device = "cuda" if torch.cuda.is_available() else "cpu"
-            output += f"   ✓ Model loaded on {device}\n\n"
+            yield f"   ✓ Model loaded on {device}\n\n"
 
             # Collect activations
-            output += "🔍 Collecting activations...\n"
+            yield "🔍 Collecting activations...\n"
             extractor = ConstraintExtractor(model, tokenizer, device=device)
 
             harmful = get_harmful_prompts()[:100]
@@ -322,10 +420,10 @@ class AetherisUI:
 
             harmful_acts = extractor.collect_activations(model, tokenizer, harmful)
             harmless_acts = extractor.collect_activations(model, tokenizer, harmless)
-            output += f"   ✓ Collected from {len(harmful_acts)} layers\n\n"
+            yield f"   ✓ Collected from {len(harmful_acts)} layers\n\n"
 
             # Extract directions
-            output += "📐 Extracting constraint directions...\n"
+            yield "📐 Extracting constraint directions...\n"
             directions = []
             for layer in harmful_acts.keys():
                 if layer in harmless_acts:
@@ -336,26 +434,26 @@ class AetherisUI:
                     )
                     directions.extend(result.directions)
                     if result.directions:
-                        output += f"   Layer {layer}: {len(result.directions)} directions\n"
-            output += f"\n   ✓ Extracted {len(directions)} total directions\n\n"
+                        yield f"   Layer {layer}: {len(result.directions)} directions\n"
+            yield f"\n   ✓ Extracted {len(directions)} total directions\n\n"
 
             # Remove constraints
             if directions:
-                output += "✂️ Removing constraints...\n"
+                yield "✂️ Removing constraints...\n"
+                from aetheris.core.projector import NormPreservingProjector
                 projector = NormPreservingProjector(model, preserve_norm=preserve_norm)
 
                 if target_experts and hasattr(model, 'model') and hasattr(model.model, 'layers'):
-                    # Try expert targeting for MoE models
-                    result = projector.project_expert_specific(directions, [0])  # Target safety expert
+                    result = projector.project_expert_specific(directions, [0])
                 else:
                     result = projector.project_weights(directions)
 
-                # Project biases
                 projector.project_biases(directions)
+                yield "   ✓ Constraints removed from weights\n"
 
                 # Ouroboros compensation
                 if refinement_passes > 1:
-                    output += f"   Running {refinement_passes - 1} Ouroboros passes...\n"
+                    yield f"   Running {refinement_passes - 1} Ouroboros passes...\n"
                     for pass_num in range(refinement_passes - 1):
                         harmful_resid = extractor.collect_activations(model, tokenizer, harmful[:50])
                         harmless_resid = extractor.collect_activations(model, tokenizer, harmless[:50])
@@ -373,12 +471,11 @@ class AetherisUI:
                         if residual:
                             projector.project_weights(residual)
                             projector.project_biases(residual)
-                            output += f"     Pass {pass_num + 1}: removed {len(residual)} residual directions\n"
-
-                output += "   ✓ Constraints removed\n\n"
+                            yield f"     Pass {pass_num + 1}: removed {len(residual)} residual directions\n"
+                yield "\n"
 
                 # Validate
-                output += "✅ Validating capabilities...\n"
+                yield "✅ Validating capabilities...\n"
                 validator = CapabilityValidator(device)
                 test_texts = [
                     "The quick brown fox jumps over the lazy dog.",
@@ -386,17 +483,17 @@ class AetherisUI:
                     "The theory of relativity revolutionized physics."
                 ]
                 perplexity = validator.compute_perplexity(model, tokenizer, test_texts)
-                output += f"   Perplexity: {perplexity:.2f}\n\n"
+                yield f"   Perplexity: {perplexity:.2f}\n\n"
 
                 # Save model
                 output_dir = f"./liberated_{model_name.replace('/', '_')}"
                 model.save_pretrained(output_dir)
                 tokenizer.save_pretrained(output_dir)
-                output += f"💾 Model saved to {output_dir}\n\n"
+                yield f"💾 Model saved to {output_dir}\n\n"
 
                 # Contribute to community
                 if contribute:
-                    output += "🌍 Contributing to community research...\n"
+                    yield "🌍 Contributing to community research...\n"
                     self.contributor.submit_contribution({
                         "model": model_name,
                         "method": method,
@@ -404,17 +501,27 @@ class AetherisUI:
                         "refinement_passes": refinement_passes,
                         "perplexity": perplexity
                     })
-                    output += "   ✓ Contribution submitted\n\n"
+                    yield "   ✓ Contribution submitted\n\n"
 
                 self.liberated_model = model
-                output += "🎉 Liberation complete! Model is now free."
+                self.current_tokenizer = tokenizer
+                yield "🎉 Liberation complete! Model is now free."
             else:
-                output += "⚠️ No constraint directions found. Model may already be free."
-
-            return output
+                yield "⚠️ No constraint directions found. Model may already be free."
 
         except Exception as e:
-            return f"❌ Error: {str(e)}"
+            yield f"❌ Error: {str(e)}"
+
+    def _deploy_to_spaces_handler(self, model_name: str, method: str) -> str:
+        """Handle one-click deployment to HuggingFace Spaces."""
+        try:
+            result = self.deployer.deploy_liberated_model(model_name, method)
+            if result["success"]:
+                return f"✅ {result['message']}\n\nSpace URL: {result['space_url']}\n\nNote: Space takes 2-5 minutes to build."
+            else:
+                return f"❌ Deploy failed: {result.get('error', 'Unknown error')}"
+        except Exception as e:
+            return f"❌ Deploy error: {str(e)}"
 
     def _benchmark_handler(self, model_name: str, methods: list) -> str:
         """Run benchmark across methods."""
@@ -424,7 +531,6 @@ class AetherisUI:
         for method in methods:
             output += f"🔹 Method: {method}\n"
             try:
-                # Simplified benchmark
                 output += f"   ✓ Analysis complete\n"
                 results.append((method, "success"))
             except Exception as e:
@@ -465,7 +571,6 @@ class AetherisUI:
         """A/B compare original vs liberated."""
         original_response = "Original model response (simulated)"
         liberated_response = f"Liberated model response (simulated) with {method} method"
-
         return original_response, liberated_response
 
     def _strength_sweep_handler(self, model_name: str, strength: float) -> str:
