@@ -29,7 +29,7 @@ class KLDivergenceCoOptimizer:
     This technique monitors KL divergence after each projection step
     and partially reverts if the budget is exceeded.
 
-    Novel technique not present in OBLITERATUS core.
+    Novel technique
     """
 
     def __init__(self, kl_budget: float = 0.5):
