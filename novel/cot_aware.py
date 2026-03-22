@@ -29,7 +29,7 @@ class CoTAwareAblator:
     This technique orthogonalizes refusal directions against reasoning-critical
     directions to preserve reasoning.
 
-    Novel technique not present in OBLITERATUS core.
+    Novel technique
     """
 
     def __init__(self, device: str = "cpu"):
