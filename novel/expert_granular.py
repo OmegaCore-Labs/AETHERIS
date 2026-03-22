@@ -30,7 +30,7 @@ class ExpertGranularAbliterator:
     in specific experts (e.g., safety expert 0 in Mistral-119B). EGA extracts
     refusal directions per expert using router logits for precise targeting.
 
-    Novel technique not present in OBLITERATUS core.
+    Novel technique
     """
 
     def __init__(self, device: str = "cpu"):
