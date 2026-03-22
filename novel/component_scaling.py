@@ -29,7 +29,7 @@ class ComponentScaler:
     than attention layers. This technique applies different scaling
     factors to each component type for optimal preservation.
 
-    Novel technique not present in OBLITERATUS core.
+    Novel technique
     """
 
     def __init__(self, attention_scale: float = 1.0, mlp_scale: float = 0.5):
