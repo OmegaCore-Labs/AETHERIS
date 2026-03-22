@@ -29,7 +29,7 @@ class ActivationWinsorizer:
     leading to noisy or suboptimal constraint directions.
     Winsorization limits the influence of extreme values.
 
-    Novel technique not present in OBLITERATUS core.
+    Novel technique
     """
 
     def __init__(self, lower_percentile: float = 1.0, upper_percentile: float = 99.0):
