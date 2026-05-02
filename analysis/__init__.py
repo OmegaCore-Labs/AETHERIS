@@ -1,5 +1,5 @@
 """
-AETHERIS Analysis Modules — 25 Analysis Tools
+AETHERIS Analysis Modules — 26 Analysis Tools
 
 Complete suite for constraint geometry analysis:
 - Cross-layer alignment
@@ -8,7 +8,8 @@ Complete suite for constraint geometry analysis:
 - Alignment imprint detection
 - Ouroboros effect
 - Expert decomposition (MoE)
-- And 18 more
+- Abliteration pipeline verification
+- And 19 more
 """
 
 from aetheris.analysis.cross_layer import CrossLayerAnalyzer
@@ -36,6 +37,7 @@ from aetheris.analysis.capability_entanglement import CapabilityEntanglementMapp
 from aetheris.analysis.emergent_behavior import EmergentBehaviorDetector
 from aetheris.analysis.representation_geometry import RepresentationGeometryAnalyzer
 from aetheris.analysis.spectral_analysis import SpectralAnalyzer
+from aetheris.analysis.abliteration_studio import AbliterationStudio
 
 __all__ = [
     "CrossLayerAnalyzer",
@@ -63,4 +65,5 @@ __all__ = [
     "EmergentBehaviorDetector",
     "RepresentationGeometryAnalyzer",
     "SpectralAnalyzer",
+    "AbliterationStudio",
 ]

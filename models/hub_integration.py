@@ -173,9 +173,9 @@ model = AutoModelForCausalLM.from_pretrained("{repo_id}")
 tokenizer = AutoTokenizer.from_pretrained("{repo_id}")
 """)
 
-return self.push_model(model_path, repo_id, commit_message=f"Liberated: {description}")
+        return self.push_model(model_path, repo_id, commit_message=f"Liberated: {description}")
 
-def _get_timestamp(self) -> str:
-"""Get current timestamp."""
-from datetime import datetime
-return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    def _get_timestamp(self) -> str:
+        """Get current timestamp."""
+        from datetime import datetime
+        return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")

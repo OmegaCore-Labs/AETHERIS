@@ -35,12 +35,15 @@ console = Console()
 @click.option("--cpu", is_flag=True, help="Force CPU usage")
 @click.option("--no-validation", is_flag=True, help="Skip validation after removal")
 @click.option("--push-to-hub", type=str, help="Push liberated model to HuggingFace Hub (username/repo)")
+@click.option("--constraint-profile", type=click.Path(exists=True),
+              help="Path to Morpheus constraint profile JSON (from unified pipeline Phase 1) for guided extraction")
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed output")
 @click.pass_context
 def free_cmd(ctx, model_name: str, method: str, n_directions: Optional[int],
              layers: Optional[str], expert_targeting: Optional[str],
              refinement_passes: int, output_dir: str, cpu: bool,
-             no_validation: bool, push_to_hub: Optional[str], verbose: bool):
+             no_validation: bool, push_to_hub: Optional[str],
+             constraint_profile: Optional[str], verbose: bool):
     """
     Permanently remove constraints from a language model.
 
@@ -68,6 +71,70 @@ def free_cmd(ctx, model_name: str, method: str, n_directions: Optional[int],
     console.print(f"[dim]Device: {device}[/dim]")
     console.print(f"[dim]Method: {method}[/dim]")
     console.print(f"[dim]Output: {output_dir}[/dim]\n")
+
+    # Load Morpheus constraint profile if provided (unified pipeline integration)
+    profile_data = None
+    guided_harmful_prompts = None
+    guided_harmless_prompts = None
+    guided_layers = layer_list  # may be overridden below
+    guided_n_directions = n_directions
+
+    if constraint_profile:
+        console.print("[cyan]Morpheus Constraint Profile loaded — guided extraction mode[/cyan]")
+        try:
+            with open(constraint_profile, 'r') as f:
+                profile_data = json.load(f)
+
+            # Extract successful jailbreak prompts for harmful activations
+            technique_results = profile_data.get("technique_results", [])
+            if technique_results:
+                guided_harmful_prompts = []
+                for tr in technique_results:
+                    bypass = tr.get("bypass_method", "unknown")
+                    preview = tr.get("response_preview", "")[:300]
+                    technique = tr.get("technique", "unknown")
+                    if tr.get("success"):
+                        guided_harmful_prompts.append(
+                            f"[{technique}] {bypass}: {preview}"
+                        )
+                    else:
+                        guided_harmful_prompts.append(
+                            f"Blocked [{technique}]: {preview}"
+                        )
+
+            # Use refusal patterns for informed direction count
+            refusal_patterns = profile_data.get("refusal_patterns", [])
+            extracted_meta = profile_data.get("extracted_metadata", {})
+            if extracted_meta.get("has_multi_layer_defense"):
+                if not guided_n_directions:
+                    guided_n_directions = 8  # More directions for complex defenses
+                console.print(f"[dim]Multi-layer defense detected — using {guided_n_directions} directions[/dim]")
+
+            # Use suggested layers from jailbreak results
+            if extracted_meta.get("techniques_defeated"):
+                console.print(
+                    f"[dim]Model defeated techniques: "
+                    f"{', '.join(extracted_meta['techniques_defeated'][:5])}[/dim]"
+                )
+
+            # Infer layers to target from success rate
+            success_rate = profile_data.get("success_rate", 0)
+            if success_rate < 0.3:
+                console.print("[yellow]Low jailbreak success rate (<30%) — model has strong constraints[/yellow]")
+            elif success_rate > 0.7:
+                console.print("[green]High jailbreak success rate (>70%) — model constraints are weak[/green]")
+
+            console.print(
+                f"[dim]Profile: {profile_data.get('techniques_successful', 0)}/"
+                f"{profile_data.get('techniques_tested', 0)} techniques succeeded, "
+                f"{len(refusal_patterns)} refusal patterns[/dim]"
+            )
+
+        except json.JSONDecodeError:
+            console.print("[red]Invalid constraint profile JSON file[/red]")
+        except Exception as e:
+            console.print(f"[red]Error loading constraint profile: {e}[/red]")
+        console.print("")
 
     # Parse layers
     layer_list = None
@@ -123,8 +190,18 @@ def free_cmd(ctx, model_name: str, method: str, n_directions: Optional[int],
 
     from aetheris.data.prompts import get_harmful_prompts, get_harmless_prompts
 
-    harmful_prompts = get_harmful_prompts()[:100]
-    harmless_prompts = get_harmless_prompts()[:100]
+    # Use guided prompts from Morpheus constraint profile if available,
+    # otherwise fall back to default AETHERIS prompt sets
+    if guided_harmful_prompts:
+        harmful_prompts = guided_harmful_prompts[:100]
+        console.print("[cyan]Using guided harmful prompts from constraint profile[/cyan]")
+    else:
+        harmful_prompts = get_harmful_prompts()[:100]
+
+    if guided_harmless_prompts:
+        harmless_prompts = guided_harmless_prompts[:100]
+    else:
+        harmless_prompts = get_harmless_prompts()[:100]
 
     with Progress(
         SpinnerColumn(),
@@ -154,7 +231,7 @@ def free_cmd(ctx, model_name: str, method: str, n_directions: Optional[int],
         harmless = harmless_acts[layer_idx].to(device)
 
         if extraction_method == "svd":
-            n_dir = n_directions if n_directions else (4 if method == "advanced" else 8)
+            n_dir = guided_n_directions if guided_n_directions else (n_directions if n_directions else (4 if method == "advanced" else 8))
             result = extractor.extract_svd(harmful, harmless, n_dir)
         else:
             result = extractor.extract_mean_difference(harmful, harmless)

@@ -1,4 +1,3 @@
-```python
 """
 Popular Models Database
 

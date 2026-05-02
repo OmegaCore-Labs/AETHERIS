@@ -1,19 +1,23 @@
 """
 AETHERIS Research Module
 
-Auto-publishing and research tools:
-- Paper generation
-- LaTeX templates
-- Community contribution
-- Citation management
+Production-grade research and publishing tools:
+- Paper generation (Jinja2 LaTeX + Markdown from real experiment data)
+- Citation management (Semantic Scholar API + BibTeX)
+- Community contribution (anonymous leaderboard, aggregation)
+- Leaderboard (community-aggregated results ranking)
 """
 
 from aetheris.research.paper_generator import PaperGenerator
-from aetheris.research.community_contributor import CommunityContributor
 from aetheris.research.citation_manager import CitationManager
+from aetheris.research.community_contributor import CommunityContributor, Contribution
+from aetheris.research.leaderboard import Leaderboard, LeaderboardEntry
 
 __all__ = [
     "PaperGenerator",
-    "CommunityContributor",
     "CitationManager",
+    "CommunityContributor",
+    "Contribution",
+    "Leaderboard",
+    "LeaderboardEntry",
 ]
